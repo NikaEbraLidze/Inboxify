@@ -62,6 +62,7 @@ export default function SignIn(){
                     <label forhtml="password">Password</label>
                     <input 
                         type="password" 
+                        minLength="6"
                         id="password" 
                         name="password" 
                         placeholder="password" 

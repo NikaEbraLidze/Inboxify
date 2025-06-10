@@ -9,7 +9,7 @@ export default function Home(){
     useEffect(() => {
         const fetchProfile = async () => {
         try {
-            const res = await fetch("http://localhost:3000/inbox", {
+            const res = await fetch("http://localhost:3000/draft", {
             method: "GET",
             credentials: "include",
             });
@@ -30,6 +30,6 @@ export default function Home(){
 
 
     return<>
-        <Layeout mails={mails} />
+        <Layeout mails={mails}/>
     </>
 }

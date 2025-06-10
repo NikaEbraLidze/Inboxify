@@ -50,12 +50,13 @@
     color: var(--secText);
 }
 
-.data{
-    margin: 20px 0;
+.data-m{
+    margin: 20px auto 20px 5px;
     width: 100%;
     border-bottom: var(--border);
     padding-bottom: 5px;
     color: var(--secText);
+    text-align: left;
 }
 
 .main-message{

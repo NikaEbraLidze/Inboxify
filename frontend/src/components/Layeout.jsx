@@ -3,44 +3,34 @@ import Compose from "../components/Compose"
 import Aside from "../components/Aside"
 import Header from "./Header"
 import MailList from "./Maillist.jsx"
-import initialMail  from "../data/recivedMails.js"
+import Error from './Error'
 
-export default function Layeout(){
-    const [compose, setCompose] = useState(false);
-    const [mails, setMails] = useState(initialMail);
-
-    const inboxMenu = mails.filter(mail => !mail.inTrash)
+export default function Layeout(props){
+    const [ compose, setCompose] = useState(false);
+    const [ error, setError ] = useState(false);
 
     function handleClick(){
         setCompose(!compose);
     }
 
-    function MoveToTrash(id){
-        setMails(prev => 
-            prev.map(mail => mail.id === id ? { ...mail, inTrash: true } : mail)
-        )
+    function handleError(err){
+        setError(err);
     }
 
-    function IsRead(id){
-        setMails(prev => 
-            prev.map(mail => mail.id === id ? { ...mail, read: true } : mail)
-        )
-    }
-    
     return <>
+        {error && <Error message={error} />}
         <div className="layout">
+            
             <Aside handleFunction={handleClick} />
             <div className="main">
-                <Header />
-                <section className="content">
+                <Header/>
+                {props.isMessage ? props.FullMail : <section className="content">
                     <MailList
-                        mails={inboxMenu}
-                        onRead={IsRead}
-                        onTrash={MoveToTrash}
+                        mails={props.mails}
                     />
-                </section>
+                </section>}
             </div>
-            {compose && <Compose handleFunction={handleClick}/>}
+            {compose && <Compose handleFunction={handleClick} error={handleError} />}
         </div>
     </>
 }

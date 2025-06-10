@@ -43,6 +43,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) return next();
+  return res.status(401).json({ success: false, message: "Unauthorized" });
+}
+
 app.post("/login", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) {
@@ -72,8 +77,6 @@ app.post("/checkemail", async (req, res) => {
   }
 });
 
-
-
 app.post("/register", async (req, res) => {
     const { fName, lName, username, password, confPassword } = req.body; 
 
@@ -100,6 +103,168 @@ app.get("/check-auth", (req, res) => {
     res.json({ authenticated: true, user: req.user });
   } else {
     res.status(401).json({ authenticated: false });
+  }
+});
+
+app.get("/inbox", async (req, res) => {
+   if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const result = await db.query(
+    "SELECT * FROM emails WHERE recipient_email=$1 AND in_trash=false;",
+    [req.user.email]
+  )
+  
+  res.status(201).json({success: true, emails: result.rows});
+});
+
+app.get("/trash", async (req, res) => {
+   if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const result = await db.query(
+    "SELECT * FROM emails WHERE recipient_email=$1 AND in_trash=true;",
+    [req.user.email]
+  )
+  
+  res.status(201).json({success: true, emails: result.rows});
+});
+
+app.get("/sent", async (req, res) => {
+   if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const result = await db.query(
+    "SELECT * FROM emails WHERE senders_email=$1 AND draft=false AND in_trash=false;",
+    [req.user.email]
+  )
+  
+  res.status(201).json({success: true, emails: result.rows});
+});
+
+app.get("/draft", async (req, res) => {
+   if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const result = await db.query(
+    "SELECT * FROM emails WHERE senders_email=$1 AND draft=true AND in_trash=false;",
+    [req.user.email]
+  )
+  
+  res.status(201).json({success: true, emails: result.rows});
+});
+
+app.delete('/trash/:id',  async (req, res) => {
+  const id = req.params.id;
+  try{
+    const result = await db.query( "DELETE FROM emails WHERE id = $1", [id] );
+
+    if (result.rowCount === 0) return res.status(404).json({ success: false, message: 'Item not found' });
+
+    res.json({ success: true, message: "Item deleted" });
+  }catch(err){
+    res.status(500).json({ success: false, message: "Error deleting item" });
+  }
+})
+
+app.patch('/inbox/:id', async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const result = await db.query( "UPDATE emails SET in_trash = true WHERE id = $1", [id] );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Item not found' });
+    }
+
+    res.json({ success: true, message: "Item moved to trash" });
+  } catch (err) {
+    console.error("DB error:", err);
+    res.status(500).json({ success: false, message: "Error moving item to trash" });
+  }
+});
+
+app.patch('/restore/:id', async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const result = await db.query( "UPDATE emails SET in_trash = false WHERE id = $1", [id] );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Item not found' });
+    }
+
+    res.json({ success: true, message: "Item restored" });
+  } catch (err) {
+    console.error("DB error:", err);
+    res.status(500).json({ success: false, message: "Error restoring item" });
+  }
+});
+
+// app.post("/register", async (req, res) => {
+//     const { fName, lName, username, password, confPassword } = req.body; 
+
+//     if (password !== confPassword) {
+//         return res.json({ success: false, message: "Passwords do not match" });
+//     }
+
+//     try {
+//         const hashedPassword = await bcrypt.hash(password, saltRounds);
+//         await db.query(
+//         "INSERT INTO users (fname, lname, email, password) VALUES ($1, $2, $3, $4)",
+//         [fName, lName, username+"@inboxify.ge", hashedPassword]
+//         );
+
+//         return res.json({ success: true });
+//     } catch (err) {
+//         console.error("Registration error:", err);
+//         return res.json({ success: false, message: "Something went wrong" });
+//     }
+// });
+
+app.post("/compose", ensureAuthenticated, async (req, res) => {
+  const { to, subject, message } = req.body;
+
+  try {
+    const recipientUser = await db.query("SELECT * FROM users WHERE email = $1", [to]);
+
+    if (recipientUser.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: "Recipient not found"
+      });
+    }
+
+    const recipient = recipientUser.rows[0];
+
+    await db.query(
+      `INSERT INTO emails 
+        (senders_name, senders_email, recipient_name, recipient_email, subject, main_text, draft, in_trash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        `${req.user.fname} ${req.user.lname}`,
+        req.user.email,
+        `${recipient.fname} ${recipient.lname}`,
+        recipient.email,
+        subject,
+        message,
+        false,
+        false
+      ]
+    );
+
+    return res.json({ success: true });
+
+  } catch (err) {
+    console.error("Compose error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while sending message"
+    });
   }
 });
 

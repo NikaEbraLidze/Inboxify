@@ -1,18 +1,20 @@
 import Mail from "./Mail";
 
-export default function MailList({ mails, onRead, onTrash }) {
+export default function MailList({ mails }) {
+  if (!Array.isArray(mails)) {
+    return <p>No emails to show</p>;
+  }
+
   return (
     <>
       {mails.map(mail => (
         <Mail
           key={mail.id}
-          name={mail.sender.name}
+          name={mail.senders_name}
+          id={mail.id}
           subject={mail.subject}
-          date={mail.date}
-          read={mail.read}
-          message={mail.message}
-          IsRead={() => onRead(mail.id)}
-          MoveToTrash={() => onTrash(mail.id)}
+          date={mail.sent_time.slice(0, 10)}
+          message={mail.main_text}
         />
       ))}
     </>

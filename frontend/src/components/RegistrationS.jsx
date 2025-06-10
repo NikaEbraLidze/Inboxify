@@ -9,10 +9,10 @@ export default function RegistrationS({ formData, handleChange, handleSubmit }){
 
                 <form className="login-form" onSubmit={(e) => handleSubmit(e, "secondPage", "success")}>
                     <label forhtml="password">Password</label>
-                    <input type="password" id="password" onChange={handleChange} value={formData.password} name="password" placeholder="password" required />
+                    <input type="password" minLength="6" id="password" onChange={handleChange} value={formData.password} name="password" placeholder="password" required />
 
                     <label forhtml="confPassword">Confirm password</label>
-                    <input type="password" id="confPassword" onChange={handleChange} value={formData.confPassword} name="confPassword" placeholder="Confirm password" required />
+                    <input type="password" minLength="6" id="confPassword" onChange={handleChange} value={formData.confPassword} name="confPassword" placeholder="Confirm password" required />
 
                     <button className="btn" type="submit">Next</button>
                 </form>
