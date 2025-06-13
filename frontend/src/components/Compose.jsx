@@ -19,32 +19,58 @@ export default function Compose(props){
     }
 
     async function composeEmail(e) {
-    e.preventDefault();
+        e.preventDefault();
+        try {
+            const res = await fetch("http://localhost:3000/compose", {
+                method: "POST",
+                credentials: "include", 
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
 
-    try {
-        const res = await fetch("http://localhost:3000/compose", {
-            method: "POST",
-            credentials: "include", 
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-        });
+            const data = await res.json();
 
-        const data = await res.json();
-
-        if (data.success) {
-            setSuccess(true);
-            setSuccessMessage("Message sent successfully");
-            setFormData(initFormData());
-        } else {
-            props.error(data.message || "Compose failed");
+            if (data.success) {
+                setSuccess(true);
+                setSuccessMessage("Message sent successfully");
+                setFormData(initFormData());
+            } else {
+                props.error(data.message || "Compose failed");
+            }
+        } catch (err) {
+            console.error(err);
+            props.error("Server error");
         }
-    } catch (err) {
-        console.error(err);
-        props.error("Server error");
     }
-}
+
+    async function draftEmail(e){
+        e.preventDefault();
+        try {
+            const res = await fetch("http://localhost:3000/addtodraft", {
+                method: "POST",
+                credentials: "include", 
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setSuccess(true);
+                setSuccessMessage("Draft saved successfully");
+                setFormData(initFormData());
+            } else {
+                props.error(data.message || "draft failed");
+            }
+        } catch (err) {
+            console.error(err);
+            props.error("Server error");
+        }
+    }
 
     return (
         <section className="compose-section show-new-message">
@@ -89,7 +115,7 @@ export default function Compose(props){
                     ></textarea>
 
                     <div className="btn-container">
-                        <button className="btn draft" type="button">Draft</button>
+                        <button className="btn draft" type="button" onClick={draftEmail}>Draft</button>
                         <button className="btn" type="submit">Send</button>
                     </div>
                 </form>

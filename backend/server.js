@@ -112,7 +112,7 @@ app.get("/inbox", async (req, res) => {
   }
 
   const result = await db.query(
-    "SELECT * FROM emails WHERE recipient_email=$1 AND in_trash=false;",
+    "SELECT * FROM emails WHERE recipient_email=$1 AND in_trash=false ORDER BY id DESC;",
     [req.user.email]
   )
   
@@ -125,7 +125,7 @@ app.get("/trash", async (req, res) => {
   }
 
   const result = await db.query(
-    "SELECT * FROM emails WHERE recipient_email=$1 AND in_trash=true;",
+    "SELECT * FROM emails WHERE recipient_email=$1 AND in_trash=true ORDER BY id DESC;",
     [req.user.email]
   )
   
@@ -138,7 +138,7 @@ app.get("/sent", async (req, res) => {
   }
 
   const result = await db.query(
-    "SELECT * FROM emails WHERE senders_email=$1 AND draft=false AND in_trash=false;",
+    "SELECT * FROM emails WHERE senders_email=$1 AND draft=false AND in_trash=false ORDER BY id DESC;",
     [req.user.email]
   )
   
@@ -151,7 +151,7 @@ app.get("/draft", async (req, res) => {
   }
 
   const result = await db.query(
-    "SELECT * FROM emails WHERE senders_email=$1 AND draft=true AND in_trash=false;",
+    "SELECT * FROM emails WHERE senders_email=$1 AND draft=true AND in_trash=false ORDER BY id DESC;",
     [req.user.email]
   )
   
@@ -205,26 +205,22 @@ app.patch('/restore/:id', async (req, res) => {
   }
 });
 
-// app.post("/register", async (req, res) => {
-//     const { fName, lName, username, password, confPassword } = req.body; 
+app.post('/viewmail/:id', async (req, res) => {
+  const id = req.params.id;
 
-//     if (password !== confPassword) {
-//         return res.json({ success: false, message: "Passwords do not match" });
-//     }
+  try {
+    const result = await db.query( "SELECT * FROM emails WHERE id = $1", [id] );
 
-//     try {
-//         const hashedPassword = await bcrypt.hash(password, saltRounds);
-//         await db.query(
-//         "INSERT INTO users (fname, lname, email, password) VALUES ($1, $2, $3, $4)",
-//         [fName, lName, username+"@inboxify.ge", hashedPassword]
-//         );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Email not found' });
+    }
 
-//         return res.json({ success: true });
-//     } catch (err) {
-//         console.error("Registration error:", err);
-//         return res.json({ success: false, message: "Something went wrong" });
-//     }
-// });
+    res.json({ success: true, email: result.rows[0] });
+  } catch (err) {
+    console.error("DB error:", err);
+    res.status(500).json({ success: false, message: "Error finding Email" });
+  }
+});
 
 app.post("/compose", ensureAuthenticated, async (req, res) => {
   const { to, subject, message } = req.body;
@@ -253,6 +249,48 @@ app.post("/compose", ensureAuthenticated, async (req, res) => {
         subject,
         message,
         false,
+        false
+      ]
+    );
+
+    return res.json({ success: true });
+
+  } catch (err) {
+    console.error("Compose error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while sending message"
+    });
+  }
+});
+
+app.post("/addtodraft", ensureAuthenticated, async (req, res) => {
+  const { to, subject, message } = req.body;
+
+  try {
+    const recipientUser = await db.query("SELECT * FROM users WHERE email = $1", [to]);
+
+    if (recipientUser.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: "Recipient not found"
+      });
+    }
+
+    const recipient = recipientUser.rows[0];
+
+    await db.query(
+      `INSERT INTO emails 
+        (senders_name, senders_email, recipient_name, recipient_email, subject, main_text, draft, in_trash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        `${req.user.fname} ${req.user.lname}`,
+        req.user.email,
+        `${recipient.fname} ${recipient.lname}`,
+        recipient.email,
+        subject,
+        message,
+        true,
         false
       ]
     );

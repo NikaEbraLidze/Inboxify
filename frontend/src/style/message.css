@@ -59,6 +59,15 @@
     text-align: left;
 }
 
+.subject {
+  width: 100%;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--mainText);
+  margin: 10px 0;
+  text-align: left;
+}
+
 .main-message{
     height: 100%;
     resize: none;

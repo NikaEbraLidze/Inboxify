@@ -444,12 +444,12 @@ body{
 }
 
 .name{
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .subject{
   left: 190px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .date{
@@ -548,12 +548,12 @@ body{
 }
 
 .name{
-  font-size: 0.9rem;
+  font-size: 0.7rem;
 }
 
 .subject{
-  left: 120px;
-  font-size: 0.8rem;
+  left: 110px;
+  font-size: 0.8rem!important;
 }
 
 .date{

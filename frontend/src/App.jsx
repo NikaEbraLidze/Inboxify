@@ -22,31 +22,31 @@ function App() {
             <ProtectedRoute>
               <Home />
             </ProtectedRoute>
-          } />
+        } />
 
         <Route path="/sent" element={
             <ProtectedRoute>
               <Sent />
             </ProtectedRoute>
-          } />
+        } />
 
         <Route path="/draft" element={
             <ProtectedRoute>
               <Draft />
             </ProtectedRoute>
-          } />
+        } />
 
         <Route path="/trash" element={
             <ProtectedRoute>
               <Trash />
             </ProtectedRoute>
-          } />
+        } />
           
-        <Route path="/message" element={
-            <ProtectedRoute>
-              <Message />
-            </ProtectedRoute>
-          } />
+        <Route path="/message/:id" element={
+          <ProtectedRoute>
+            <Message />
+          </ProtectedRoute>
+        } />
 
       </Routes>
     </>

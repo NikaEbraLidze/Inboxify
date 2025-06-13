@@ -60,36 +60,34 @@ export default function Mail(props) {
         
     };
 
-    // const handleClick = async (id) => {
-    //     try{
-    //         const res = await fetch(`http://localhost:3000/viewmail/${id}`);
-
-    //         if (!res.ok) throw new Error("Failed to load message");
-
-    //         navigate(`${path}/${id}`);
-    //     }catch(err){
-    //         console.error("Failed to load:", err.message);
-    //     }
-    // }
+    const goToMessage = (id) => {
+        navigate(`/message/${id}`);
+    };
 
     if (isDeleted) return null;
 
     return (
-        <div className="mail" onClick={handleClick}>
+        <div className="mail" onClick={() => goToMessage(props.id)}>
             <div className="mail-container">
                 <h3 className="name">{props.name}</h3>
                 <p className="subject">{props.subject}</p>
                 <p className="date">{props.date}</p>
             </div>
             <div className="mail-container">
-                <p className="short-message">{props.message}</p>
+                <p className="short-message">{props.message.slice(0, 70)}</p>
                 {path === "/trash" && <SettingsBackupRestoreIcon 
                     className='restore-icon'
-                    onClick={() => Restore(props.id)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        Restore(props.id);
+                    }}
                 />}
                 <DeleteOutlineIcon
                     className='delete-icon'
-                    onClick={() => MoveToTrash(props.id)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        MoveToTrash(props.id);
+                    }}  
                 />
             </div>
         </div>

@@ -1,27 +1,53 @@
-export default function Message(){
-    return<>
-    <section class="view-mail">
-                <div class="view-mail-container">
-                    <div class="mail-name-container">
-                        <img class="mail-icon" src="#" />
-                        <div class="name-mail">
-                            <h4>Nikoloz Ebralidze</h4>
-                            <p class="inboxify">nikaebralidze@inboxify.ge</p>
-                        </div>
-                    </div>
-                    <p class="data-m">22.05.2025</p>
-                    <textarea class="main-message" readonly>
-        Hello,
+import { useState, useEffect } from "react";
 
-        I hope you're doing well. I just wanted to share a few thoughts with you. Lately, I’ve been thinking about how important it is not to forget our goals, even when life becomes tough and overwhelming. Every day is an opportunity to grow, to learn something new, and to improve ourselves.
+export default function FullMail({ messageId }) {
+  const [email, setEmail] = useState(null);
+  const [error, setError] = useState("");
 
-        We may be walking a difficult path, but these challenges help shape us into stronger, better people. I see great potential in you, and I want you to know that believing in yourself is the greatest strength you can have.
+  useEffect(() => {
+    const fetchEmail = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/viewmail/${messageId}`, {
+          method: "POST",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.success) {
+          setEmail(data.email);
+        } else {
+          setError(data.message);
+        }
+      } catch (err) {
+        setError("Server error");
+      }
+    };
 
-        Wishing you inspiration and peace. You truly deserve it.
+    fetchEmail();
+  }, [messageId]);
 
-        With respect,
-                    </textarea>
-                </div>
+  if (error) return <div>{error}</div>;
+  if (!email) return <div>Loading...</div>;
+
+  return (
+    <section className="view-mail">
+      <div className="view-mail-container">
+        <div className="mail-name-container">
+          <img className="mail-icon" src="https://cdn-icons-png.flaticon.com/512/3233/3233508.png" alt="sender" />
+
+          <div className="name-mail">
+            <h4>{email.senders_name}</h4>
+            <p className="inboxify">{email.senders_email}</p>
+          </div>
+          
+        </div>
+
+        <p className="data-m">{email.sent_time}</p>
+        {/* <p className="subject">{email.subject}</p> */}
+
+        <textarea className="main-message" readOnly>
+          {email.main_text}
+        </textarea>
+      </div>
     </section>
-    </>
+  );
 }
